@@ -1,0 +1,83 @@
+# sent: https://tools.suckless.org/sent/
+
+TetrisRNN
+
+Joseph Hines and John Zlotek
+
+#@nyan.png
+
+>Problem
+
+@alpha_go.ff
+
+@mar_io.ff
+
+- Solutions exist that train AI's to be optimal
+- Lacking AI's that mimic players accurately
+- Singleplayer games with bad AI are not fun
+
+- Bad AI can make games too easy or too hard
+- Take inspiration from multiplayer games (ELO)
+
+@elo.ff
+
+Goal:
+- Develop an AI to play like a specific player
+
+>Data
+
+- Gathering our own data for this project
+- Save the state of the screen and the user's inputs
+
+- Build simple Tetris clone
+- Add data gathering to this clone
+- Allow game to be played as normal
+- Capture data in background
+
+- Starting with an n=2 (us)
+- Potential for gathering data from more users
+
+>Prior Work
+
+Heavily inspired by SethBling's MariFlow
+# https://docs.google.com/document/d/1p4ZOtziLmhf0jPbZTTaFxSKdYqE91dYcTNqTVdd6es4/edit
+
+@mariflow.ff
+
+- Use an RNN to build a model that mimics a human player
+- Leveraging pygame and TensorFlow
+
+>Method (Overview)
+
+- Build simple Tetris clone with data gathering
+- Play a lot of this Tetris clone
+- Train model on user specific data
+- Evaluate model with respect to that player
+
+- Potentially use online training
+- Model and player take turns being in control
+- Learn what keys to press and when
+
+- Experiment with different model structures
+- Find optimal model wrt data needed and performance
+
+>Method (Prospective technologies)
+
+- Language: python3
+- Libraries: pygame, numpy, tensorflow
+
+>Class Relation
+
+- Utilizes RNN's, a prominent topic in both our class and DL in general
+- The design and generation of training/testing data
+- Investigation into optimal network structure for a given task
+
+>Conclusion
+
+- We propose a solution that can learn to mimic a human's play
+- Using Tetris, we can easily benchmark how well the AI matches
+
+- If successful, apply this to more complex games
+- Provide a more accurately challenging gameplay experience
+
+Thank you!
