@@ -4,9 +4,7 @@ TetrisRNN
 
 Joseph Hines and John Zlotek
 
-#@nyan.png
-
->Problem
+> Problem
 
 @alpha_go.ff
 
@@ -24,7 +22,7 @@ Joseph Hines and John Zlotek
 Goal:
 - Develop an AI to play like a specific player
 
->Data
+> Data
 
 - Gathering our own data for this project
 - Save the state of the screen and the user's inputs
@@ -37,7 +35,7 @@ Goal:
 - Starting with an n=2 (us)
 - Potential for gathering data from more users
 
->Prior Work
+> Prior Work
 
 Heavily inspired by SethBling's MariFlow
 # https://docs.google.com/document/d/1p4ZOtziLmhf0jPbZTTaFxSKdYqE91dYcTNqTVdd6es4/edit
@@ -47,7 +45,7 @@ Heavily inspired by SethBling's MariFlow
 - Use an RNN to build a model that mimics a human player
 - Leveraging pygame and TensorFlow
 
->Method (Overview)
+> Method (Overview)
 
 - Build simple Tetris clone with data gathering
 - Play a lot of this Tetris clone
@@ -59,20 +57,26 @@ Heavily inspired by SethBling's MariFlow
 - Learn what keys to press and when
 
 - Experiment with different model structures
-- Find optimal model wrt data needed and performance
+- Find optimal model
+  - Data needed
+  - Training time
+  - Performance
 
->Method (Prospective technologies)
+> Method (Prospective technologies)
 
 - Language: python3
-- Libraries: pygame, numpy, tensorflow
+- Libraries:
+  - pygame
+  - numpy
+  - keras/tensorflow
 
->Class Relation
+> Class Relation
 
 - Utilizes RNN's, a prominent topic in both our class and DL in general
 - The design and generation of training/testing data
 - Investigation into optimal network structure for a given task
 
->Conclusion
+> Conclusion
 
 - We propose a solution that can learn to mimic a human's play
 - Using Tetris, we can easily benchmark how well the AI matches
