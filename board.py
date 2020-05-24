@@ -14,33 +14,34 @@ PIECES = [
     (colors.CYAN, np.array([[1, 1, 1, 1]]))
 ]
 
+
 class Board:
     def __init__(self, board_rows=20, board_cols=10):
         self._board = np.zeros((board_rows, board_cols), dtype=np.int)
-        # self._board = np.random.uniform(low=0, high=8, size=(board_rows, board_cols))
-        # self._board = self._board.astype(np.int)
+
+    def add_piece(self, piece):
+        pass
+
+    def valid_move(self, piece, pos):
+        return not self.out_of_bounds(piece, pos) and not self.collides(piece, pos)
 
     def apply_command(self, piece, curr_coords: np.array, commands: np.array):
-        """
-        :param piece: np.array
-        :param commands: [UP, DOWN, LEFT, RIGHT] bool
-        """
-        x, y = curr_coords
-        if commands[0]:  # UP
+        up, down, left, right = commands
+        if up:  # Do rotate
             new_piece = np.rot90(piece)
-            piece_loc = np.zeros(self._board.shape, dtype=np.int)
-            piece_loc[y:new_piece.shape[1], x:new_piece.shape[0]] = new_piece[:, :]
-
-            if np.sum(self._board.astype(bool).astype(int) & piece_loc.astype(bool).astype(int)) == 0:  # no collision
+            if self.valid_move(new_piece, curr_coords):
                 piece = new_piece
-                self._board.astype(bool).astype(int) & piece_loc.astype(bool).astype(int)
 
-        elif commands[2]:  # LEFT
-            piece_loc = np.zeros(self._board.shape, dtype=np.int)
-            piece_loc[y:piece.shape[1], x:piece_loc.shape[0]] = piece_loc[:, :]
+        if left:  # LEFT
+            new_coords = curr_coords + np.array([-1, 0])
+            if self.valid_move(piece, new_coords):
+                curr_coords = new_coords
+        elif right:
+            new_coords = curr_coords + np.array([1, 0])
+            if self.valid_move(piece, new_coords):
+                curr_coords = new_coords
 
-            if np.sum(self._board.astype(bool).astype(int) & piece_loc.astype(bool).astype(int)) == 0:  # no collision
-                pass
+        return piece, np.array(curr_coords)
 
     def out_of_bounds(self, piece, pos):
         b_h, b_w = self._board.shape
@@ -76,8 +77,36 @@ class Board:
                 offset += 1
         return True
 
+    def move_down(self, piece, pos, piece_idx):
+        if self.out_of_bounds(piece, pos + np.array([0, 1])) or self.collides(piece, pos + np.array([0, 1])):  # set piece in board
+            x, y = pos
+            for j, row in enumerate(piece):
+                for i, col in enumerate(row):
+                    if col != 0:
+                        self._board[y + j, x + i] = piece_idx
+            return piece, pos, True
+        else:
+            return piece, pos + np.array([0, 1]), False
+
+
+
     def get_board(self):
         return np.copy(self._board)
+
+    def render_piece(self, screen, piece, pos, piece_idx):
+        x, y = pos
+        for idx_r, row in enumerate(piece):
+            for idx_c, col in enumerate(row):
+                color = PIECES[piece_idx - 1][0]
+                if col != 0:
+                    pygame.draw.rect(
+                        screen,
+                        color,
+                        pygame.Rect(
+                            ((idx_c + x) * BLOCK_SIZE, BLOCK_SIZE * (idx_r + y)),
+                            (BLOCK_SIZE, BLOCK_SIZE)
+                        )
+                    )
 
     def render(self, screen: pygame.Surface):
         for idx_r, row in enumerate(self._board):

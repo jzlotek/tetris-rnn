@@ -2,6 +2,7 @@ import unittest
 
 from board import Board, PIECES
 
+
 class TestBoard(unittest.TestCase):
 
     def setUp(self):
@@ -10,9 +11,13 @@ class TestBoard(unittest.TestCase):
     def test_board_init(self):
         self.assertEqual(self.board.get_board().sum(), 0)
 
+    def test_game_over(self):
+        self.assertFalse(self.board.game_over())
+        self.board._board[:, 1] = 1
+        self.assertTrue(self.board.game_over())
+
     def test_collides(self):
         self.board._board[-1, :] = 1
-
         piece = PIECES[0][1]
         pos = [0, 18]
         self.assertTrue(self.board.collides(piece, pos))
@@ -47,7 +52,3 @@ class TestBoard(unittest.TestCase):
         self.board = Board()
         self.assertEqual(self.board.get_board().sum(), 0)
         self.assertFalse(self.board.check_rows())
-
-
-if __name__ == "__main__":
-    unittest.main()
