@@ -18,6 +18,8 @@ PIECES = [
 class Board:
     def __init__(self, board_rows=20, board_cols=10):
         self._board = np.zeros((board_rows, board_cols), dtype=np.int)
+        self.rows = board_rows
+        self.cols = board_cols
 
     def add_piece(self, piece):
         pass
@@ -61,7 +63,7 @@ class Board:
     def check_rows(self):
         sums = np.argwhere(self._board.astype(bool).astype(int).sum(axis=1) == self._board.shape[1])
         if len(sums) == 0:
-            return False
+            return 0
 
         for row in reversed(range(self._board.shape[0])):
             if np.sum(self._board[row].astype(bool).astype(int)) == self._board.shape[1]:
@@ -75,7 +77,7 @@ class Board:
                 self._board[row + offset + 1, :] = self._board[row + offset, :]
                 self._board[row + offset, :] = np.zeros((1, self._board.shape[1]))
                 offset += 1
-        return True
+        return len(sums)
 
     def move_down(self, piece, pos, piece_idx):
         if self.out_of_bounds(piece, pos + np.array([0, 1])) or self.collides(piece, pos + np.array([0, 1])):  # set piece in board
