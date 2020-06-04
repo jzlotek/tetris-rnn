@@ -54,7 +54,7 @@ def main():
     random.seed(time.time())
     screen = pygame.display.set_mode(size)
 
-    clock = pygame.time.Clock()
+    # clock = pygame.time.Clock()
 
     TIME_BETWEEN_TICKS = 0.25
     last_tick_time = time.time()
@@ -69,7 +69,7 @@ def main():
     while not board.game_over():
         screen.fill(colors.BLACK)
         piece_set = False
-        tps = clock.tick(60)
+        # tps = clock.tick(60)
         inputs = np.array([0, 0, 0, 0])
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -77,9 +77,11 @@ def main():
             if event.type == pygame.QUIT:
                 sys.exit()
 
-        piece, piece_coords = board.apply_command(piece_idx, piece, piece_coords, inputs)
+        piece, piece_coords = \
+            board.apply_command(piece_idx, piece, piece_coords, inputs)
         if time.time() - last_tick_time > TIME_BETWEEN_TICKS:
-            piece, piece_coords, piece_set = board.move_down(piece, piece_coords, piece_idx)
+            piece, piece_coords, piece_set = \
+                board.move_down(piece, piece_coords, piece_idx)
             last_tick_time = time.time()
         else:
             pass
