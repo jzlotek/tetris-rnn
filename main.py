@@ -77,7 +77,7 @@ def main():
             if event.type == pygame.QUIT:
                 sys.exit()
 
-        piece, piece_coords = board.apply_command(piece, piece_coords, inputs)
+        piece, piece_coords = board.apply_command(piece_idx, piece, piece_coords, inputs)
         if time.time() - last_tick_time > TIME_BETWEEN_TICKS:
             piece, piece_coords, piece_set = board.move_down(piece, piece_coords, piece_idx)
             last_tick_time = time.time()

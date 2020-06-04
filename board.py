@@ -14,7 +14,6 @@ PIECES = [
     (colors.CYAN, np.array([[1, 1, 1, 1]]))
 ]
 
-
 class Board:
     def __init__(self, board_rows=20, board_cols=10):
         self._board = np.zeros((board_rows, board_cols), dtype=np.int)
@@ -27,21 +26,26 @@ class Board:
     def valid_move(self, piece, pos):
         return not self.out_of_bounds(piece, pos) and not self.collides(piece, pos)
 
-    def apply_command(self, piece, curr_coords: np.array, commands: np.array):
+    def apply_command(self, piece_idx, piece, curr_coords: np.array, commands: np.array):
         up, down, left, right = commands
         if up:  # Do rotate
             new_piece = np.rot90(piece)
             if self.valid_move(new_piece, curr_coords):
                 piece = new_piece
 
-        if left:  # LEFT
+        if left: # Move
             new_coords = curr_coords + np.array([-1, 0])
             if self.valid_move(piece, new_coords):
                 curr_coords = new_coords
-        elif right:
+        elif right: # Move
             new_coords = curr_coords + np.array([1, 0])
             if self.valid_move(piece, new_coords):
                 curr_coords = new_coords
+
+        if down: # Drop
+            isDown = False
+            while not isDown:
+                piece, curr_coords, isDown = self.move_down(piece, curr_coords, piece_idx)
 
         return piece, np.array(curr_coords)
 
@@ -80,7 +84,8 @@ class Board:
         return len(sums)
 
     def move_down(self, piece, pos, piece_idx):
-        if self.out_of_bounds(piece, pos + np.array([0, 1])) or self.collides(piece, pos + np.array([0, 1])):  # set piece in board
+        if self.out_of_bounds(piece, pos + np.array([0, 1])) or \
+                self.collides(piece, pos + np.array([0, 1])):  # set piece in board
             x, y = pos
             for j, row in enumerate(piece):
                 for i, col in enumerate(row):
@@ -90,10 +95,21 @@ class Board:
         else:
             return piece, pos + np.array([0, 1]), False
 
-
-
     def get_board(self):
         return np.copy(self._board)
+
+    def draw_bordered_rect(self,screen,color,x,y,border=3):
+        r = pygame.Rect(
+                (x * BLOCK_SIZE, BLOCK_SIZE * y),
+                (BLOCK_SIZE, BLOCK_SIZE),
+            )
+        pygame.draw.rect(
+            screen,
+            colors.GREY,
+            r,
+            border,
+        )
+        screen.fill(color,r)
 
     def render_piece(self, screen, piece, pos, piece_idx):
         x, y = pos
@@ -101,24 +117,10 @@ class Board:
             for idx_c, col in enumerate(row):
                 color = PIECES[piece_idx - 1][0]
                 if col != 0:
-                    pygame.draw.rect(
-                        screen,
-                        color,
-                        pygame.Rect(
-                            ((idx_c + x) * BLOCK_SIZE, BLOCK_SIZE * (idx_r + y)),
-                            (BLOCK_SIZE, BLOCK_SIZE)
-                        )
-                    )
+                    self.draw_bordered_rect(screen,color,idx_c+x,idx_r+y)
 
     def render(self, screen: pygame.Surface):
         for idx_r, row in enumerate(self._board):
             for idx_c, col in enumerate(row):
                 color = PIECES[col - 1][0] if col != 0 else colors.BLACK
-                pygame.draw.rect(
-                    screen,
-                    color,
-                    pygame.Rect(
-                        (idx_c * BLOCK_SIZE, BLOCK_SIZE * idx_r),
-                        (BLOCK_SIZE, BLOCK_SIZE)
-                    )
-                )
+                self.draw_bordered_rect(screen,color,idx_c,idx_r)
