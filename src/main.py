@@ -13,10 +13,11 @@ from board import Board, PIECES
 from data_model import DataStore
 
 pygame.init()
-data_store = DataStore()
+data_store = DataStore("test.out")
 logger = loguru.logger
 
 size = width, height = 640, 480
+
 
 def run_data_store():
     logger.info("Started data runner")
@@ -56,7 +57,7 @@ def print_stats(screen, level, score, lines_cleared):
 
 
 def main():
-    data_store_thread = threading.Thread(run_data_store)
+    data_store_thread = threading.Thread(target=run_data_store)
     data_store_thread.start()
     score = 0
     level = 0
@@ -86,6 +87,8 @@ def main():
             if event.type == pygame.KEYDOWN:
                 inputs = get_inputs_user(event)
             if event.type == pygame.QUIT:
+                data_store.stop()
+                data_store_thread.join()
                 sys.exit()
 
         piece, piece_coords = \
@@ -109,6 +112,9 @@ def main():
 
         print_stats(screen, level, score, lines_cleared)
         pygame.display.update()
+
+    data_store.stop()
+    data_store_thread.join()
 
     font = pygame.font.FontType('freesansbold.ttf', 20)
     text = "Game Over - Press Enter"

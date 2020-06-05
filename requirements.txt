@@ -18,6 +18,7 @@ Keras==2.3.1
 Keras-Applications==1.0.8
 Keras-Preprocessing==1.1.2
 lazy-object-proxy==1.4.3
+loguru==0.5.0
 Markdown==3.2.2
 mccabe==0.6.1
 numpy==1.18.4
