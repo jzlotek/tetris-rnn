@@ -3,15 +3,24 @@ import sys
 import colors
 import numpy as np
 import time
+import threading
 import random
+import loguru
 
 from pygame import K_DOWN, K_LEFT, K_UP, K_RIGHT, K_KP_ENTER
 
 from board import Board, PIECES
+from data_model import DataStore
 
 pygame.init()
+data_store = DataStore()
+logger = loguru.logger
 
 size = width, height = 640, 480
+
+def run_data_store():
+    logger.info("Started data runner")
+    data_store.run()
 
 
 def get_inputs_user(event: pygame.event) -> np.array:
@@ -47,6 +56,8 @@ def print_stats(screen, level, score, lines_cleared):
 
 
 def main():
+    data_store_thread = threading.Thread(run_data_store)
+    data_store_thread.start()
     score = 0
     level = 0
     lines_cleared = 0
