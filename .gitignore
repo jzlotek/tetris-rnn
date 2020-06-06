@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Addional ignores
+src/__pycache__
+src/__pypackages__
+*.png
+*.jpg
+*.out

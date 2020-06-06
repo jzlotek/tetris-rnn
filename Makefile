@@ -6,8 +6,8 @@ venv:
 	bash install.sh
 
 clean:
-	rm -rf venv __pycache__
+	rm -rfv venv __pycache__ **/__pycache__
 
-run: venv
+run-%: src/%.py venv
 	source ./venv/bin/activate && \
-		python src/main.py
+		python src/$*.py
