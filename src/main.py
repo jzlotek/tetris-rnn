@@ -87,7 +87,7 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 inputs = get_inputs_user(event)
-                curr_input = Instance(board.get_board(), curr_input.last_move, inputs, piece_idx)
+                curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
                 data_store.write(str(curr_input))
             if event.type == pygame.QUIT:
                 data_store.stop()
@@ -100,7 +100,7 @@ def main():
             piece, piece_coords, piece_set = \
                 board.move_down(piece, piece_coords, piece_idx)
             last_tick_time = time.time()
-            curr_input = Instance(board.get_board(), curr_input.last_move, inputs, piece_idx)
+            curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
             data_store.write(str(curr_input))
         else:
             pass
@@ -108,7 +108,7 @@ def main():
         board.render_piece(screen, piece, piece_coords, piece_idx)
 
         if piece_set:  # collided with bottom or another piece on tick
-            curr_input = Instance(board.get_board(), curr_input.last_move, inputs, piece_idx)
+            curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
             data_store.write(str(curr_input))
             piece_idx, piece = get_rand_piece()
             piece_coords = np.array([0, 0])
