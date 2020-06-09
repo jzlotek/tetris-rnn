@@ -14,7 +14,7 @@ class Instance:
         self.board = board.tolist()
         try:
             self.last_move = last_move.tolist()
-        except:
+        except Exception:
             self.last_move = last_move
         self.current_move = current_move.tolist()
         self.next_piece = next_piece
@@ -40,9 +40,14 @@ class DataStore:
             if self.queue.empty():
                 time.sleep(5)
                 continue
-            l = self.queue.get_nowait()
-            with open(f"tmp/{self.file_name}_{datetime.datetime.now().strftime('%Y%m%d-%H%M%S%f')}.json.tmp", 'w') as tmpfile:
-                tmpfile.write(l)
+            head = self.queue.get_nowait()
+            with open(
+                f"tmp/{self.file_name}_" +
+                    f"{datetime.datetime.now().strftime('%Y%m%d-%H%M%S%f')}" +
+                    ".json.tmp",
+                'w'
+            ) as tmpfile:
+                tmpfile.write(head)
             self.logger.info("Write Queue Empty... Sleeping")
 
         while self.saving:
@@ -58,7 +63,11 @@ class DataStore:
         while not self.queue.empty():
             time.sleep(0.1)
         g = glob.glob(f'tmp/{self.file_name}*')
-        with open(f'{self.file_name}.json', 'w') as file:
+        with open(
+            f"{self.file_name}_" +
+                f"{datetime.datetime.now().strftime('%m%d%H%M%S')}.json",
+            'w'
+        ) as file:
             file.write('[')
             for i, f_name in enumerate(g):
                 with open(f_name, 'r') as tmp_file:
@@ -68,4 +77,3 @@ class DataStore:
             file.write(']')
         shutil.rmtree('tmp')
         self.saving = False
-

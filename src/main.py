@@ -19,7 +19,7 @@ pygame.font.init()
 data_store = DataStore("joe")
 logger = loguru.logger
 
-size = width, height = 640, 480
+size = width, height = 350, 400
 
 
 def run_data_store():
@@ -48,20 +48,30 @@ def calc_speed(level):
 
 
 def print_line(screen, text, center):
-    font = pygame.font.FontType('freesansbold.ttf', 12)
+    font = pygame.font.FontType('freesansbold.ttf', 20)
     surface = font.render(text, True, colors.WHITE)
     screen.blit(surface, dest=center)
 
 
 def print_stats(screen, level, score, lines_cleared):
-    print_line(screen, "Level: %d" % level, (225, 160))
-    print_line(screen, "Score: %d" % score, (225, 175))
-    print_line(screen, "Lines: %d" % lines_cleared, (225, 190))
+    print_line(screen, "Level: %d" % level, (235, 160))
+    print_line(screen, "Score: %d" % score, (235, 180))
+    print_line(screen, "Lines: %d" % lines_cleared, (235, 200))
 
 
 def show_next_up(screen, board, piece, piece_idx):
     print_line(screen, "Next piece:", (225, 10))
     board.render_piece(screen, piece, (12, 2), piece_idx)
+
+
+def show_message(screen, s):
+    screen.fill(colors.BLACK)
+    font = pygame.font.FontType('freesansbold.ttf', 20)
+    surface = font.render(s, True, colors.WHITE)
+    rectangle = surface.get_rect()
+    rectangle.center = (width // 2, height // 2)
+    screen.blit(surface, rectangle)
+    pygame.display.update()
 
 
 def main():
@@ -148,17 +158,12 @@ def main():
         print_stats(screen, level, score, lines_cleared)
         pygame.display.update()
 
-    font = pygame.font.FontType('freesansbold.ttf', 20)
-    text = "Game Over - Press Enter"
-    surface = font.render(text, True, colors.WHITE)
-    rectangle = surface.get_rect()
-    rectangle.center = (width // 2, height // 2)
-    screen.blit(surface, rectangle)
-
-    pygame.display.update()
+    show_message(screen, "Game Over - Score: {} | saving...".format(score))
 
     data_store.stop()
     data_store_thread.join()
+
+    show_message(screen, "Score: {} | Press Enter to Quit".format(score))
 
     logger.info("Data saved...")
 
@@ -166,8 +171,7 @@ def main():
     while 1:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or \
-               pygame.key.get_pressed()[K_KP_ENTER] or \
-               event.key == 13:
+                    pygame.key.get_pressed()[K_KP_ENTER]:
                 sys.exit()
 
 
