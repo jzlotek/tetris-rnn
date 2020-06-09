@@ -1,16 +1,19 @@
 import tensorflow.keras as ks
+import numpy as np
+from board import PIECES
+
 ls = ks.layers
 
 
 def init_model(debug=False):
-    batch_size = 32
-    board_input = ls.Input(shape=(batch_size, 20, 10))
-    aux_input = ls.Input(shape=(batch_size, 5,))
+    batch_size = 1
+    board_input = ls.Input(shape=(batch_size, 20, 10), name="board")
+    aux_input = ls.Input(shape=(batch_size, 5,), name='aux')
 
     # Board state
     x = ls.Conv2D(
         filters=24,
-        kernel_size=4,
+        kernel_size=3,
         padding="same",
         activation="sigmoid",
     )(board_input)
@@ -57,19 +60,47 @@ def init_model(debug=False):
     z = ls.Dense(
         units=4,
         activation="sigmoid",
+        name="predicted_move"
     )(z)
 
     model = ks.Model(inputs=[x.input, y.input], outputs=z)
 
     if debug:
         model.summary()
-        ks.utils.plot_model(model, to_file="./model.png")
+        # ks.utils.plot_model(model, to_file="./model.png")
 
+    model.compile(optimizer='adam', loss='mse')
     return model
+
+def get_next_piece(idx):
+    piece = np.array(PIECES[idx - 1])
+    h, w = piece.shape
+    ret = np.zeros((2, 4))
+
+    ret[:h, :w] = piece[:, :]
+
+    return ret
+
+def map_data(data):
+    board = [np.array(tick.get("board")) for tick in data]
+    next_piece = [get_next_piece(tick.get("next_piece")) for tick in data]
+    last_move = [np.array(tick.get("last_move")) for tick in data]
+    next_move = [np.array(tick.get("current_move")) for tick in data]
+    return (board, next_piece, last_move), next_move
+
 
 
 def main():
-    _ = init_model(debug=True)
+    import json
+    with open('joe_0608234605.json', 'r') as f:
+        file = json.load(f)
+
+    (board, next_piece, last_move), next_move = map_data(file)
+
+    model = init_model(debug=True)
+    print(board[0])
+    print(next_move[0])
+    model.fit({"board": board}, {"predicted_move": next_move})
 
 
 if __name__ == "__main__":

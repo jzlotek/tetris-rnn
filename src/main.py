@@ -1,14 +1,14 @@
-import pygame
-import sys
-import colors
-import numpy as np
-import time
-import threading
 import random
-import loguru
+import sys
+import threading
+import time
 
+import numpy as np
+import loguru
+import pygame
 from pygame import K_DOWN, K_LEFT, K_UP, K_RIGHT, K_KP_ENTER
 
+import colors
 from piece import Piece
 from board import Board, PIECE_FACTORIES
 from data_model import DataStore, Instance
