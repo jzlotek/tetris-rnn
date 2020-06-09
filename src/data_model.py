@@ -39,6 +39,7 @@ class DataStore:
         while self.running or not self.queue.empty():
             if self.queue.empty():
                 time.sleep(5)
+                self.logger.info("Write Queue Empty... Sleeping")
                 continue
             head = self.queue.get_nowait()
             with open(
@@ -48,7 +49,6 @@ class DataStore:
                 'w'
             ) as tmpfile:
                 tmpfile.write(head)
-            self.logger.info("Write Queue Empty... Sleeping")
 
         while self.saving:
             time.sleep(0.1)
