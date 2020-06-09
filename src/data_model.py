@@ -36,11 +36,13 @@ class DataStore:
         if not os.path.isdir('tmp'):
             os.makedirs('tmp')
         self.running = True
+
         while self.running or not self.queue.empty():
             if self.queue.empty():
                 time.sleep(5)
                 self.logger.info("Write Queue Empty... Sleeping")
                 continue
+
             head = self.queue.get_nowait()
             with open(
                 f"tmp/{self.file_name}_" +
@@ -56,24 +58,33 @@ class DataStore:
     def write(self, data):
         self.queue.put_nowait(str(data))
 
-    def stop(self):
-        self.logger.info("Waiting for save queue to finish writing to disk")
+    def stop(self, write=True):
+        if write:
+            self.logger.info(
+                "Waiting for save queue to finish writing to disk"
+            )
+        else:
+            self.logger.info("Flushing queue and exiting")
+
         self.saving = True
         self.running = False
         while not self.queue.empty():
             time.sleep(0.1)
-        g = glob.glob(f'tmp/{self.file_name}*')
-        with open(
-            f"{self.file_name}_" +
-                f"{datetime.datetime.now().strftime('%m%d%H%M%S')}.json",
-            'w'
-        ) as file:
-            file.write('[')
-            for i, f_name in enumerate(g):
-                with open(f_name, 'r') as tmp_file:
-                    file.write(''.join(tmp_file.readlines()))
-                    if i != len(g) - 1:
-                        file.write(',\n')
-            file.write(']')
+
+        if write:
+            g = glob.glob(f'tmp/{self.file_name}*')
+            with open(
+                f"{self.file_name}_" +
+                    f"{datetime.datetime.now().strftime('%m%d%H%M%S')}.json",
+                'w'
+            ) as file:
+                file.write('[')
+                for i, f_name in enumerate(g):
+                    with open(f_name, 'r') as tmp_file:
+                        file.write(''.join(tmp_file.readlines()))
+                        if i != len(g) - 1:
+                            file.write(',\n')
+                file.write(']')
+
         shutil.rmtree('tmp')
         self.saving = False
