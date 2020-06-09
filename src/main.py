@@ -12,8 +12,11 @@ from pygame import K_DOWN, K_LEFT, K_UP, K_RIGHT, K_KP_ENTER
 from board import Board, PIECES
 from data_model import DataStore, Instance
 
-pygame.init()
-data_store = DataStore("test.out")
+# Only initialize display and font engines
+pygame.display.init()
+pygame.font.init()
+
+data_store = DataStore("joe")
 logger = loguru.logger
 
 size = width, height = 640, 480
@@ -45,15 +48,20 @@ def calc_speed(level):
 
 
 def print_line(screen, text, center):
-    font = pygame.font.Font(pygame.font.get_default_font(), 12)
-    surface = font.render(text, False, colors.WHITE)
+    font = pygame.font.FontType('freesansbold.ttf', 12)
+    surface = font.render(text, True, colors.WHITE)
     screen.blit(surface, dest=center)
 
 
 def print_stats(screen, level, score, lines_cleared):
-    print_line(screen, "Level: %d" % level, (400, 10))
-    print_line(screen, "Score: %d" % score, (400, 25))
-    print_line(screen, "Lines: %d" % lines_cleared, (400, 40))
+    print_line(screen, "Level: %d" % level, (225, 160))
+    print_line(screen, "Score: %d" % score, (225, 175))
+    print_line(screen, "Lines: %d" % lines_cleared, (225, 190))
+
+
+def show_next_up(screen, board, piece, piece_idx):
+    print_line(screen, "Next piece:", (225, 10))
+    board.render_piece(screen, piece, (12, 2), piece_idx)
 
 
 def main():
@@ -76,18 +84,27 @@ def main():
     pygame.display.update()
 
     piece_idx, piece = get_rand_piece()
-    piece_coords = np.array([board.cols // 2, 0])
-    curr_input = Instance(board.get_board(), np.array([0,0,0,0]), np.array([0,0,0,0]), piece_idx)
+    npiece_idx, npiece = get_rand_piece()
+    piece_coords = np.array([(board.cols // 2)-1, 0])
+    curr_input = Instance(board.get_board(),  np.array([0, 0, 0, 0]),
+                          np.array([0, 0, 0, 0]),  npiece_idx)
 
     while not board.game_over():
         screen.fill(colors.BLACK)
         piece_set = False
+        show_next_up(screen, board, npiece, npiece_idx)
+
         # tps = clock.tick(60)
         inputs = np.array([0, 0, 0, 0])
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 inputs = get_inputs_user(event)
-                curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
+                curr_input = Instance(
+                    board.get_board(),
+                    curr_input.current_move,
+                    inputs,
+                    npiece_idx
+                )
                 data_store.write(str(curr_input))
             if event.type == pygame.QUIT:
                 data_store.stop()
@@ -100,7 +117,12 @@ def main():
             piece, piece_coords, piece_set = \
                 board.move_down(piece, piece_coords, piece_idx)
             last_tick_time = time.time()
-            curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
+            curr_input = Instance(
+                board.get_board(),
+                curr_input.current_move,
+                inputs,
+                npiece_idx
+            )
             data_store.write(str(curr_input))
         else:
             pass
@@ -108,10 +130,16 @@ def main():
         board.render_piece(screen, piece, piece_coords, piece_idx)
 
         if piece_set:  # collided with bottom or another piece on tick
-            curr_input = Instance(board.get_board(), curr_input.current_move, inputs, piece_idx)
+            curr_input = Instance(
+                board.get_board(),
+                curr_input.current_move,
+                inputs,
+                npiece_idx
+            )
             data_store.write(str(curr_input))
-            piece_idx, piece = get_rand_piece()
-            piece_coords = np.array([0, 0])
+            piece_idx, piece = npiece_idx, npiece
+            npiece_idx, npiece = get_rand_piece()
+            piece_coords = np.array([(board.cols // 2)-1, 0])
             removed_rows = board.check_rows()
             lines_cleared += removed_rows
             score += calc_score(level, removed_rows)
@@ -119,9 +147,6 @@ def main():
 
         print_stats(screen, level, score, lines_cleared)
         pygame.display.update()
-
-    data_store.stop()
-    data_store_thread.join()
 
     font = pygame.font.FontType('freesansbold.ttf', 20)
     text = "Game Over - Press Enter"
@@ -132,11 +157,17 @@ def main():
 
     pygame.display.update()
 
+    data_store.stop()
+    data_store_thread.join()
+
+    logger.info("Data saved...")
+
+    pygame.event.clear()
     while 1:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-            if pygame.key.get_pressed()[K_KP_ENTER]:
+            if event.type == pygame.QUIT or \
+               pygame.key.get_pressed()[K_KP_ENTER] or \
+               event.key == 13:
                 sys.exit()
 
 

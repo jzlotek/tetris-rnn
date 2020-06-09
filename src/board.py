@@ -128,7 +128,7 @@ class Board:
             )
         pygame.draw.rect(
             screen,
-            colors.GREY,
+            colors.DARKGREY,
             r,
             border,
         )
