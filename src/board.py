@@ -2,43 +2,9 @@ import numpy as np
 import colors
 import pygame
 
-from piece import PieceFactory
+from piece import PIECE_FACTORIES
 
 BLOCK_SIZE = 20
-
-STARTING_POS = np.array([4, 0])
-
-PIECE_FACTORIES = [
-    PieceFactory(1,
-                 colors.YELLOW,
-                 np.array([[1, 1], [1, 1]]),
-                 STARTING_POS),
-    PieceFactory(2,
-                 colors.RED,
-                 np.array([[1, 1, 0], [0, 1, 1]]),
-                 STARTING_POS),
-    PieceFactory(3,
-                 colors.GREEN,
-                 np.array([[0, 1, 1], [1, 1, 0]]),
-                 STARTING_POS),
-    PieceFactory(4,
-                 colors.ORANGE,
-                 np.array([[0, 0, 1], [1, 1, 1]]),
-                 STARTING_POS),
-    PieceFactory(5,
-                 colors.BLUE,
-                 np.array([[1, 0, 0], [1, 1, 1]]),
-                 STARTING_POS),
-    PieceFactory(6,
-                 colors.PURPLE,
-                 np.array([[0, 1, 0], [1, 1, 1]]),
-                 STARTING_POS),
-    PieceFactory(7,
-                 colors.CYAN,
-                 np.array([[1, 1, 1, 1]]),
-                 STARTING_POS),
-]
-
 
 class Board:
     def __init__(self, board_rows=20, board_cols=10):

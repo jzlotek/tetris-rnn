@@ -1,19 +1,21 @@
 import tensorflow.keras as ks
 import numpy as np
-from board import PIECES
+
+from piece import PIECE_FACTORIES
 
 ls = ks.layers
 
+batch_size = 32
+
 
 def init_model(debug=False):
-    batch_size = 1
-    board_input = ls.Input(shape=(batch_size, 20, 10), name="board")
+    board_input = ls.Input(shape=(batch_size, 20, 10, 1), name="board")
     aux_input = ls.Input(shape=(batch_size, 5,), name='aux')
 
     # Board state
     x = ls.Conv2D(
         filters=24,
-        kernel_size=3,
+        kernel_size=4,
         padding="same",
         activation="sigmoid",
     )(board_input)
@@ -60,7 +62,7 @@ def init_model(debug=False):
     z = ls.Dense(
         units=4,
         activation="sigmoid",
-        name="predicted_move"
+        name="next_move"
     )(z)
 
     model = ks.Model(inputs=[x.input, y.input], outputs=z)
@@ -72,21 +74,17 @@ def init_model(debug=False):
     model.compile(optimizer='adam', loss='mse')
     return model
 
-def get_next_piece(idx):
-    piece = np.array(PIECES[idx - 1])
-    h, w = piece.shape
-    ret = np.zeros((2, 4))
 
-    ret[:h, :w] = piece[:, :]
+def _zip_move_piece(move, piece):
+    move.append(piece)
+    return np.array(move)
 
-    return ret
 
 def map_data(data):
     board = [np.array(tick.get("board")) for tick in data]
-    next_piece = [get_next_piece(tick.get("next_piece")) for tick in data]
-    last_move = [np.array(tick.get("last_move")) for tick in data]
+    aux = [_zip_move_piece(tick.get("last_move"), tick.get("next_piece")) for tick in data]
     next_move = [np.array(tick.get("current_move")) for tick in data]
-    return (board, next_piece, last_move), next_move
+    return (board, aux), next_move
 
 
 
@@ -95,12 +93,18 @@ def main():
     with open('joe_0608234605.json', 'r') as f:
         file = json.load(f)
 
-    (board, next_piece, last_move), next_move = map_data(file)
+    (board, aux), next_move = map_data(file)
+    print(len(list(board)))
+    print(len(list(aux)))
+    print(len(list(next_move)))
 
     model = init_model(debug=True)
-    print(board[0])
-    print(next_move[0])
-    model.fit({"board": board}, {"predicted_move": next_move})
+    model.fit(
+        {"board": np.asarray(board), "aux": np.asarray(aux)},
+        {"next_move": np.asarray(next_move)},
+        batch_size=batch_size
+    )
+    model.save("model")
 
 
 if __name__ == "__main__":
