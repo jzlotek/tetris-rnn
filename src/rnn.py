@@ -9,8 +9,8 @@ batch_size = 32
 
 
 def init_model(debug=False):
-    board_input = ls.Input(shape=(batch_size, 20, 10, 1), name="board")
-    aux_input = ls.Input(shape=(batch_size, 5,), name='aux')
+    board_input = ls.Input(shape=(20, 10, 1), name="board")
+    aux_input = ls.Input(shape=(5,), name='aux')
 
     # Board state
     x = ls.Conv2D(
@@ -35,10 +35,9 @@ def init_model(debug=False):
 
     # All input combined
     combined = ls.concatenate([x.output, y.output])
-
     # Combined model
     z = ls.Reshape(
-        target_shape=(8, combined.shape[1]),
+        target_shape=(1, combined.shape[1]),
     )(combined)
     z = ls.LSTM(
         units=64,
@@ -47,7 +46,7 @@ def init_model(debug=False):
         recurrent_dropout=0.1,
     )(z)
     z = ls.Reshape(
-        target_shape=(4, z.shape[1]),
+        target_shape=(4, z.shape[1] // 4),
     )(z)
     z = ls.LSTM(
         units=32,
@@ -87,24 +86,21 @@ def map_data(data):
     return (board, aux), next_move
 
 
-
 def main():
     import json
     with open('joe_0608234605.json', 'r') as f:
         file = json.load(f)
 
     (board, aux), next_move = map_data(file)
-    print(len(list(board)))
-    print(len(list(aux)))
-    print(len(list(next_move)))
 
     model = init_model(debug=True)
     model.fit(
         {"board": np.asarray(board), "aux": np.asarray(aux)},
         {"next_move": np.asarray(next_move)},
-        batch_size=batch_size
+        batch_size=1,
+        epochs=20
     )
-    model.save("model")
+    model.save("model.h5")
 
 
 if __name__ == "__main__":
