@@ -18,10 +18,13 @@ def split_sequences(boards, aux, expected, steps):
 
         b.append(boards[i:end_idx])
         a.append(aux[i:end_idx])
-        y.append(expected[end_idx])
+        if expected is not None:
+            y.append(expected[end_idx])
 
-
-    return np.array(b), np.array(a), np.array(y)
+    return \
+        np.asarray(np.array(b)),\
+        np.asarray(np.array(a)),\
+        np.asarray(np.array(y))
 
 
 def init_model(debug=False):
@@ -91,8 +94,7 @@ def init_model(debug=False):
 
 
 def _zip_move_piece(move, piece):
-    move.append(piece)
-    return np.array(move)
+    return np.array([*move,piece])
 
 
 def map_data(data):
@@ -104,22 +106,27 @@ def map_data(data):
 
 def main():
     import json
-    with open('../clean_john.json', 'r') as f:
+    with open('clean_joe.json', 'r') as f:
         file = json.load(f)
 
     (board, aux), next_move = map_data(file)
     board, aux, next_move = split_sequences(board, aux, next_move, STEPS)
 
-    # model = init_model(debug=True)
-    model = ks.models.load_model("model.h5")
+    model = init_model(debug=True)
     hist = model.fit(
-        {"board": np.asarray(board), "aux": np.asarray(aux)},
-        {"next_move": np.asarray(next_move)},
+        {"board": board, "aux": aux},
+        {"next_move": next_move},
         batch_size=len(next_move),
-        epochs=2**11
+        epochs=2**12
     )
     model.save("model.h5")
-    print(hist)
+
+#    model = ks.models.load_model("models/john_model.h5")
+#    print(board[0:1])
+#    print(aux[0:1])
+#    pred = model.predict(
+#        {"board": board[0:1], "aux": aux[0:1]})
+#    print(pred)
 
 
 if __name__ == "__main__":

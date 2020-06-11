@@ -1,11 +1,14 @@
 import argparse
+import copy
 import random
 import sys
 import threading
 import time
 
 import numpy as np
+import tensorflow.keras as ks
 import loguru
+import json
 import pygame
 from pygame import K_DOWN, K_LEFT, K_UP, K_RIGHT, K_KP_ENTER
 
@@ -13,6 +16,7 @@ import colors
 from piece import Piece
 from board import Board, PIECE_FACTORIES
 from data_model import DataStore, Instance
+from rnn import map_data, split_sequences, STEPS
 
 # Only initialize display and font engines
 pygame.display.init()
@@ -23,6 +27,8 @@ logger = loguru.logger
 size = width, height = 350, 400
 
 data_store = None
+state = None
+
 
 def run_data_store() -> None:
     logger.info("Started data runner")
@@ -90,13 +96,24 @@ def show_message(
     pygame.display.update()
 
 
-def play(**kwargs) -> None:
-    global data_store
-    data_store = DataStore(kwargs.get("name", "default"))
-    # Initialize data collection
-    data_store_thread = threading.Thread(target=run_data_store)
-    data_store_thread.start()
+def predict_inputs(model, curr_input):
+    global state
+    state.pop(0)
+    state.append(json.loads(str(curr_input)))
+    (b, aux), _ = map_data(state)
+    b, aux, _ = split_sequences(b, aux, None, STEPS)
 
+    inputs = np.round(model.predict(
+        {
+            "board": b[0:1],
+            "aux": aux[0:1],
+        }
+    )[0])
+
+    return inputs
+
+
+def play(**kwargs) -> None:
     # Initialize game data
     score = 0
     level = 0
@@ -120,6 +137,27 @@ def play(**kwargs) -> None:
     curr_input = Instance(board.get_board(),  np.array([0, 0, 0, 0]),
                           np.array([0, 0, 0, 0]),  npiece.ID)
 
+    # Determine if a model was provided to play
+    isModel = False
+    model = None
+    model_file = kwargs.get("model_file", "default")
+    global state
+    state = []
+    if model_file is not None:
+        isModel = True
+        TIME_BETWEEN_TICKS = 0.001
+        model = ks.models.load_model(model_file)
+        curr_state = json.loads(str(curr_input))
+        for i in range(STEPS+1):
+            state.append(copy.deepcopy(curr_state))
+
+    # Initialize data collection
+    global data_store
+    if not isModel:
+        data_store = DataStore(kwargs.get("name", "default"))
+        data_store_thread = threading.Thread(target=run_data_store)
+        data_store_thread.start()
+
     # Game loop
     while not board.game_over():
         # Clear screen and inputs
@@ -129,20 +167,29 @@ def play(**kwargs) -> None:
         show_next_up(screen, board, npiece)
 
         # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:  # User provided input
-                inputs = get_inputs_user(event)
-                curr_input = Instance(
-                    board.get_board(),
-                    curr_input.current_move,
-                    inputs,
-                    npiece.ID
-                )
-                data_store.write(str(curr_input))
-            if event.type == pygame.QUIT:  # Peacefully exit
-                data_store.stop(write=False)
-                data_store_thread.join()
-                sys.exit()
+        if isModel:
+            curr_input = Instance(
+                board.get_board(),
+                curr_input.current_move,
+                inputs,
+                npiece.ID
+            )
+            inputs = predict_inputs(model, curr_input)
+        else:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:  # User provided input
+                    inputs = get_inputs_user(event)
+                    curr_input = Instance(
+                        board.get_board(),
+                        curr_input.current_move,
+                        inputs,
+                        npiece.ID
+                    )
+                    data_store.write(str(curr_input))
+                if event.type == pygame.QUIT:  # Peacefully exit
+                    data_store.stop(write=False)
+                    data_store_thread.join()
+                    sys.exit()
 
         piece = board.apply_command(piece, inputs)  # Get updated piece
 
@@ -156,7 +203,10 @@ def play(**kwargs) -> None:
                 inputs,
                 npiece.ID
             )
-            data_store.write(str(curr_input))
+            if isModel:
+                inputs = predict_inputs(model, curr_input)
+            else:
+                data_store.write(str(curr_input))
 
         # Redraw board and moving piece
         board.render(screen)
@@ -169,7 +219,10 @@ def play(**kwargs) -> None:
                 inputs,
                 npiece.ID
             )
-            data_store.write(str(curr_input))
+            if isModel:
+                inputs = predict_inputs(model, curr_input)
+            else:
+                data_store.write(str(curr_input))
 
             # Bring in next piece, get next piece
             piece = npiece.copy()
@@ -186,12 +239,14 @@ def play(**kwargs) -> None:
         pygame.display.update()
 
     # Game over messages and clean up
-    show_message(screen, "Game Over - Score: {} | saving...".format(score))
-    data_store.stop()
-    data_store_thread.join()
-    show_message(screen, "ENTER to replay | q to quit")
-
-    logger.info("Game over, data saved.")
+    if isModel:
+        show_message(screen, "Game Over - Score: {}".format(score))
+    else:
+        show_message(screen, "Game Over - Score: {} | saving...".format(score))
+        data_store.stop()
+        data_store_thread.join()
+        show_message(screen, "Game Over - Score: {} | saved.".format(score))
+        logger.info("Game over, data saved.")
 
     pygame.event.clear()
     while 1:
@@ -215,5 +270,6 @@ def main(**kwargs) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", default="default")
+    parser.add_argument("-m", "--model", default=None)
     args = parser.parse_args()
-    main(name=args.name)
+    main(name=args.name, model_file=args.model)
