@@ -6,11 +6,27 @@ from piece import PIECE_FACTORIES
 ls = ks.layers
 
 batch_size = 32
+STEPS = 4
+
+def split_sequences(boards, aux, expected, steps):
+    b, a, y = [], [], []
+    for i in range(len(boards)):
+        end_idx = i + steps
+
+        if end_idx >= len(boards):
+            break
+
+        b.append(boards[i:end_idx])
+        a.append(aux[i:end_idx])
+        y.append(expected[end_idx])
+
+
+    return np.array(b), np.array(a), np.array(y)
 
 
 def init_model(debug=False):
-    board_input = ls.Input(shape=(20, 10, 1), name="board")
-    aux_input = ls.Input(shape=(5,), name='aux')
+    board_input = ls.Input(shape=(STEPS, 20, 10), name="board")
+    aux_input = ls.Input(shape=(STEPS, 5,), name='aux')
 
     # Board state
     x = ls.Conv2D(
@@ -70,7 +86,7 @@ def init_model(debug=False):
         model.summary()
         # ks.utils.plot_model(model, to_file="./model.png")
 
-    model.compile(optimizer='adam', loss='mse')
+    model.compile(optimizer=ks.optimizers.Adam(1e-2, 1e-6), loss='binary_crossentropy', metrics=[ks.metrics.BinaryAccuracy()])
     return model
 
 
@@ -80,7 +96,7 @@ def _zip_move_piece(move, piece):
 
 
 def map_data(data):
-    board = [np.array(tick.get("board")) for tick in data]
+    board = [np.array(tick.get("board")).astype(bool).astype(int) for tick in data]
     aux = [_zip_move_piece(tick.get("last_move"), tick.get("next_piece")) for tick in data]
     next_move = [np.array(tick.get("current_move")) for tick in data]
     return (board, aux), next_move
@@ -88,19 +104,22 @@ def map_data(data):
 
 def main():
     import json
-    with open('joe_0608234605.json', 'r') as f:
+    with open('../clean_john.json', 'r') as f:
         file = json.load(f)
 
     (board, aux), next_move = map_data(file)
+    board, aux, next_move = split_sequences(board, aux, next_move, STEPS)
 
-    model = init_model(debug=True)
-    model.fit(
+    # model = init_model(debug=True)
+    model = ks.models.load_model("model.h5")
+    hist = model.fit(
         {"board": np.asarray(board), "aux": np.asarray(aux)},
         {"next_move": np.asarray(next_move)},
-        batch_size=1,
-        epochs=20
+        batch_size=len(next_move),
+        epochs=2**11
     )
     model.save("model.h5")
+    print(hist)
 
 
 if __name__ == "__main__":

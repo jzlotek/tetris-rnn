@@ -10,8 +10,8 @@ logger = loguru.logger
 def combine_files(root):
     g = glob.glob(f'{root}*.json')
 
-    output_file_name = f'./{root}.json', 'w'
-    with open(output_file_name) as output_file:
+    output_file_name = f'./{root}.json'
+    with open(output_file_name, 'w') as output_file:
         output_file.write("[")
 
         for i, input_file_name in enumerate(g):

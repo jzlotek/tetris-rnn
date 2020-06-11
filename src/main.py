@@ -1,3 +1,4 @@
+import argparse
 import random
 import sys
 import threading
@@ -17,11 +18,11 @@ from data_model import DataStore, Instance
 pygame.display.init()
 pygame.font.init()
 
-data_store = DataStore("joe")
 logger = loguru.logger
 
 size = width, height = 350, 400
 
+data_store = None
 
 def run_data_store() -> None:
     logger.info("Started data runner")
@@ -89,7 +90,9 @@ def show_message(
     pygame.display.update()
 
 
-def play() -> None:
+def play(**kwargs) -> None:
+    global data_store
+    data_store = DataStore(kwargs.get("name", "default"))
     # Initialize data collection
     data_store_thread = threading.Thread(target=run_data_store)
     data_store_thread.start()
@@ -204,10 +207,13 @@ def play() -> None:
                     sys.exit()
 
 
-def main() -> None:
+def main(**kwargs) -> None:
     while True:
-        play()
+        play(**kwargs)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--name", default="default")
+    args = parser.parse_args()
+    main(name=args.name)
