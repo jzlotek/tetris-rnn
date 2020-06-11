@@ -34,14 +34,44 @@ def combine_files(root):
     logger.info(f'Aggregated {len(g)} datasets into {output_file_name}')
 
 
+def clean_file(filename):
+    output_lines = []
+
+    with open(filename, "r") as file:
+        lines = file.readlines()
+        lines[0] = lines[0][1:]
+        lines[-1] = lines[-1][:-1]
+        for line in lines:
+            if line not in output_lines:
+                output_lines.append(line)
+
+        diff = len(lines) - len(output_lines)
+
+    with open(f'clean_{filename}', "w") as file:
+        logger.info(f'Removed {diff} duplicates, saving...')
+        file.write("[")
+        for i, line in enumerate(output_lines):
+            file.write(line)
+        file.write("]")
+
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Combine multiple JSON files for training')
-    parser.add_argument('file_root', metavar='FILE_ROOT', type=str, nargs=1,
+    parser.add_argument('--combine', metavar='FILE_ROOT', type=str, nargs=1,
                         help='The string at the start of each JSON file')
+    parser.add_argument('--clean', metavar='FILENAME', type=str, nargs=1,
+                        help='JSON file to be cleaned')
+
 
     args = parser.parse_args()
-    combine_files(args.file_root[0])
+    combine = args.combine
+    clean = args.clean
+    if combine is not None:
+        combine_files(combine[0])
+    elif clean is not None:
+        clean_file(clean[0])
 
 
 if __name__ == "__main__":
