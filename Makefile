@@ -10,4 +10,4 @@ clean:
 
 run-%: src/%.py venv
 	source ./venv/bin/activate && \
-		python src/$*.py
+		python src/$*.py ${ARGS}
