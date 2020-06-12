@@ -38,35 +38,27 @@ def init_model(debug=False):
         padding="same",
         activation="sigmoid",
     )(board_input)
-    x = ls.MaxPooling2D(
-        pool_size=(2, 2),
-        strides=1,
+    x = ls.Reshape(
+        target_shape=(STEPS,x.shape[2]*x.shape[3])
     )(x)
-    x = ls.Flatten()(x)
     x = ks.Model(inputs=board_input, outputs=x)
 
     # Next piece + input info
     y = ls.Dense(
         units=18,
     )(aux_input)
-    y = ls.Flatten()(y)
     y = ks.Model(inputs=aux_input, outputs=y)
 
     # All input combined
-    combined = ls.concatenate([x.output, y.output])
+    combined = ls.concatenate([x.output, y.output], axis=2)
     # Combined model
-    z = ls.Reshape(
-        target_shape=(1, combined.shape[1]),
-    )(combined)
     z = ls.LSTM(
         units=64,
         activation="relu",
         dropout=0.1,
         recurrent_dropout=0.1,
-    )(z)
-    z = ls.Reshape(
-        target_shape=(4, z.shape[1] // 4),
-    )(z)
+        return_sequences=True,
+    )(combined)
     z = ls.LSTM(
         units=32,
         activation="relu",
@@ -80,7 +72,7 @@ def init_model(debug=False):
     z = ls.Dense(
         units=4,
         activation="sigmoid",
-        name="next_move"
+        name="next_move",
     )(z)
 
     model = ks.Model(inputs=[x.input, y.input], outputs=z)
@@ -89,7 +81,10 @@ def init_model(debug=False):
         model.summary()
         # ks.utils.plot_model(model, to_file="./model.png")
 
-    model.compile(optimizer=ks.optimizers.Adam(1e-2, 1e-6), loss='binary_crossentropy', metrics=[ks.metrics.BinaryAccuracy()])
+    model.compile(
+        optimizer=ks.optimizers.Adam(1e-2, 1e-6),
+        loss='binary_crossentropy',
+        metrics=[ks.metrics.BinaryAccuracy()])
     return model
 
 
@@ -106,7 +101,7 @@ def map_data(data):
 
 def main():
     import json
-    with open('clean_joe.json', 'r') as f:
+    with open('default.json', 'r') as f:
         file = json.load(f)
 
     (board, aux), next_move = map_data(file)
@@ -121,12 +116,26 @@ def main():
     )
     model.save("model.h5")
 
-#    model = ks.models.load_model("models/john_model.h5")
-#    print(board[0:1])
-#    print(aux[0:1])
-#    pred = model.predict(
-#        {"board": board[0:1], "aux": aux[0:1]})
-#    print(pred)
+#    model = ks.models.load_model("amodel.h5")
+#    total = 0
+#    correct = 0
+#    for i in range(len(board)):
+#        b = board[i:i+1]
+#        a = aux[i:i+1]
+#        pred = model.predict(
+#            {"board": b, "aux": a})[0]
+#
+#        nd = np.round(pred+0.2)
+#        ex = next_move[i]
+#        print(pred, nd, next_move[i])
+#        if nd[0] == ex[0] and \
+#                nd[1] == ex[1] and \
+#                nd[2] == ex[2] and \
+#                nd[3] == ex[3]:
+#            correct += 1
+#
+#        total += 1
+#    print(100*correct/total)
 
 
 if __name__ == "__main__":

@@ -103,12 +103,15 @@ def predict_inputs(model, curr_input):
     (b, aux), _ = map_data(state)
     b, aux, _ = split_sequences(b, aux, None, STEPS)
 
-    inputs = np.round(model.predict(
+    raw_inputs = model.predict(
         {
             "board": b[0:1],
             "aux": aux[0:1],
         }
-    )[0])
+    )[0]
+
+    inputs = np.round(raw_inputs + 0.3)
+    inputs[1] = 0
 
     return inputs
 
