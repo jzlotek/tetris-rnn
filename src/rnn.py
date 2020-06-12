@@ -116,7 +116,9 @@ def main():
     )
     model.save("model.h5")
 
-#    model = ks.models.load_model("amodel.h5")
+#    model = ks.models.load_model("models/joe_model.h5")
+#    ks.utils.plot_model(model, to_file="./model.png")
+
 #    total = 0
 #    correct = 0
 #    for i in range(len(board)):
